@@ -37,6 +37,9 @@ async function fetchYahoo(symbol) {
 }
 
 async function fetchEiaDiesel() {
+  const eiaPoints = await fetchEiaDieselTable().catch(() => []);
+  if (eiaPoints.length > 0) return eiaPoints;
+
   // FRED mirrors the EIA weekly U.S. No. 2 diesel retail price series without an API key.
   const url = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=GASDESW";
   const response = await fetch(url, {
@@ -57,6 +60,66 @@ async function fetchEiaDiesel() {
     })
     .filter((point) => Number.isFinite(point.y))
     .slice(-180);
+}
+
+function textFromCell(cell) {
+  return cell
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+async function fetchEiaDieselTable() {
+  const url =
+    "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?f=W&n=PET&s=EMD_EPD2D_PTE_NUS_DPG";
+  const response = await fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0",
+      Accept: "text/html",
+    },
+  });
+  if (!response.ok) throw new Error(`EIA diesel table ${response.status}`);
+
+  const html = await response.text();
+  const monthNumbers = {
+    Jan: "01",
+    Feb: "02",
+    Mar: "03",
+    Apr: "04",
+    May: "05",
+    Jun: "06",
+    Jul: "07",
+    Aug: "08",
+    Sep: "09",
+    Oct: "10",
+    Nov: "11",
+    Dec: "12",
+  };
+  const points = [];
+  const rows = html.match(/<tr>[\s\S]*?<\/tr>/g) || [];
+
+  rows.forEach((row) => {
+    const cells = [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((match) =>
+      textFromCell(match[1]),
+    );
+    const [, year, monthName] = cells[0]?.match(/^(\d{4})-([A-Z][a-z]{2})$/) || [];
+    if (!year || !monthNumbers[monthName]) return;
+
+    for (let index = 1; index < cells.length - 1; index += 2) {
+      const date = cells[index];
+      const value = Number(cells[index + 1]);
+      const dateMatch = date.match(/^(\d{2})\/(\d{2})$/);
+      if (!dateMatch || !Number.isFinite(value)) continue;
+
+      points.push({
+        x: `${year}-${dateMatch[1]}-${dateMatch[2]}`,
+        y: value,
+      });
+    }
+  });
+
+  return points.slice(-180);
 }
 
 module.exports = async function handler(req, res) {
