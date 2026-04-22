@@ -48,7 +48,13 @@ async function fetchYahoo(symbol) {
 
 async function fetchEiaDiesel() {
   const eiaPoints = await fetchEiaDieselTable().catch(() => []);
-  if (eiaPoints.length > 0) return eiaPoints;
+  const aaaDaily = await fetchEiaDailyDiesel().catch(() => null);
+  if (eiaPoints.length > 0) {
+    if (aaaDaily && aaaDaily.x > eiaPoints.at(-1).x) {
+      return [...eiaPoints, aaaDaily].slice(-180);
+    }
+    return eiaPoints;
+  }
 
   // FRED mirrors the EIA weekly U.S. No. 2 diesel retail price series without an API key.
   const url = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=GASDESW";
@@ -60,7 +66,7 @@ async function fetchEiaDiesel() {
   });
   if (!response.ok) throw new Error(`FRED diesel ${response.status}`);
   const csv = await response.text();
-  return csv
+  const fredPoints = csv
     .trim()
     .split(/\r?\n/)
     .slice(1)
@@ -70,6 +76,10 @@ async function fetchEiaDiesel() {
     })
     .filter((point) => Number.isFinite(point.y))
     .slice(-180);
+  if (aaaDaily && aaaDaily.x > fredPoints.at(-1)?.x) {
+    return [...fredPoints, aaaDaily].slice(-180);
+  }
+  return fredPoints;
 }
 
 function textFromCell(cell) {
@@ -130,6 +140,33 @@ async function fetchEiaDieselTable() {
   });
 
   return points.slice(-180);
+}
+
+async function fetchEiaDailyDiesel() {
+  const response = await fetchWithTimeout("https://www.eia.gov/todayinenergy/prices.php", {
+    headers: {
+      "User-Agent": "Mozilla/5.0",
+      Accept: "text/html",
+    },
+  });
+  if (!response.ok) throw new Error(`EIA daily diesel ${response.status}`);
+
+  const html = await response.text();
+  const dateMatch = html.match(/Retail Petroleum Prices[\s\S]*?,\s*(\d{1,2})\/(\d{1,2})\/(\d{2})/i);
+  const dieselCells = (html.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [])
+    .map((row) =>
+      [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((match) =>
+        textFromCell(match[1]),
+      ),
+    )
+    .find((cells) => cells[0] === "Diesel" && cells[1] === "U.S. Average");
+  const dieselPrice = Number(dieselCells?.[2]);
+  if (!dateMatch || !Number.isFinite(dieselPrice)) throw new Error("EIA daily diesel parse");
+
+  return {
+    x: `20${dateMatch[3]}-${dateMatch[1].padStart(2, "0")}-${dateMatch[2].padStart(2, "0")}`,
+    y: dieselPrice,
+  };
 }
 
 module.exports = async function handler(req, res) {
