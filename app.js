@@ -106,6 +106,138 @@ const weights = {
   wheat: 0.12,
 };
 
+const customers = {
+  dg: { short: "DG", name: "Dollar General" },
+  tsc: { short: "TSC", name: "Tractor Supply" },
+  aldi: { short: "ALDI", name: "Aldi" },
+  fd: { short: "FD", name: "Family Dollar" },
+  topco: { short: "Topco", name: "Topco" },
+  heb: { short: "H-E-B", name: "H-E-B" },
+};
+
+const plantOperations = [
+  {
+    name: "Red Bay, AL",
+    role: "HQ / dry food",
+    shifts: [186000, 174500, 151200],
+    palletsReady: 428,
+    palletsQcHold: 37,
+    customers: [
+      ["dg", 12, 98.4],
+      ["tsc", 8, 96.9],
+      ["aldi", 6, 95.8],
+      ["fd", 7, 97.2],
+      ["topco", 5, 94.6],
+      ["heb", 4, 96.1],
+    ],
+  },
+  {
+    name: "Dublin, GA",
+    role: "Southeast distribution",
+    shifts: [142800, 156400, 139600],
+    palletsReady: 312,
+    palletsQcHold: 22,
+    customers: [
+      ["dg", 10, 97.8],
+      ["tsc", 5, 95.2],
+      ["aldi", 9, 98.1],
+      ["fd", 8, 96.4],
+      ["topco", 4, 94.1],
+      ["heb", 3, 93.8],
+    ],
+  },
+  {
+    name: "Elkhart, IN",
+    role: "Midwest production",
+    shifts: [164200, 171900, 148300],
+    palletsReady: 376,
+    palletsQcHold: 28,
+    customers: [
+      ["dg", 7, 96.7],
+      ["tsc", 11, 98.6],
+      ["aldi", 8, 97.4],
+      ["fd", 4, 94.9],
+      ["topco", 6, 96.2],
+      ["heb", 2, 95.1],
+    ],
+  },
+  {
+    name: "Halifax, VA",
+    role: "East Coast flow",
+    shifts: [129400, 136700, 121900],
+    palletsReady: 244,
+    palletsQcHold: 31,
+    customers: [
+      ["dg", 6, 95.9],
+      ["tsc", 7, 96.8],
+      ["aldi", 5, 94.7],
+      ["fd", 9, 97.6],
+      ["topco", 3, 93.9],
+      ["heb", 2, 94.4],
+    ],
+  },
+  {
+    name: "Tupelo, MS",
+    role: "Southern production",
+    shifts: [158600, 149800, 132500],
+    palletsReady: 289,
+    palletsQcHold: 19,
+    customers: [
+      ["dg", 11, 98.2],
+      ["tsc", 6, 95.6],
+      ["aldi", 4, 94.2],
+      ["fd", 10, 97.9],
+      ["topco", 4, 95.3],
+      ["heb", 3, 96.7],
+    ],
+  },
+  {
+    name: "Winterville, NC",
+    role: "Atlantic supply",
+    shifts: [118900, 127300, 113600],
+    palletsReady: 218,
+    palletsQcHold: 17,
+    customers: [
+      ["dg", 5, 95.1],
+      ["tsc", 8, 97.1],
+      ["aldi", 6, 96.3],
+      ["fd", 6, 95.8],
+      ["topco", 5, 96.9],
+      ["heb", 2, 94.6],
+    ],
+  },
+  {
+    name: "Joplin, MO",
+    role: "Treat capacity",
+    shifts: [96200, 104700, 88400],
+    palletsReady: 176,
+    palletsQcHold: 24,
+    customers: [
+      ["dg", 4, 94.8],
+      ["tsc", 7, 97.5],
+      ["aldi", 5, 95.4],
+      ["fd", 3, 93.7],
+      ["topco", 6, 98.2],
+      ["heb", 4, 96.6],
+    ],
+  },
+  {
+    name: "Regional Plant 8",
+    role: "Additional facility",
+    shifts: [137500, 144200, 126800],
+    palletsReady: 261,
+    palletsQcHold: 21,
+    customers: [
+      ["dg", 8, 96.5],
+      ["tsc", 6, 95.7],
+      ["aldi", 7, 97.8],
+      ["fd", 5, 94.5],
+      ["topco", 5, 96.1],
+      ["heb", 6, 98.4],
+    ],
+  },
+];
+
 function indexed(points) {
   const base = points[0]?.y || 1;
   return points.map((p) => ({
@@ -180,6 +312,7 @@ function renderMetrics() {
       `${movers[0][1] >= 0 ? "+" : ""}${movers[0][1]} index pts`,
     ],
     ["Ingredient coverage", "9 groups", "primary pet food inputs"],
+    ["Operations layer", "8 plants", "demo production and freight"],
   ]
     .map(
       ([label, value, note]) =>
@@ -191,6 +324,91 @@ function renderMetrics() {
 function formatPrice(value, unit) {
   if (unit.startsWith("$")) return `$${value.toFixed(2)}`;
   return value.toFixed(2);
+}
+
+function formatPounds(value) {
+  return `${Math.round(value / 1000).toLocaleString()}K`;
+}
+
+function fillClass(fillRate) {
+  if (fillRate >= 97) return "good";
+  if (fillRate >= 94) return "watch";
+  return "risk";
+}
+
+function renderOperations() {
+  const totalPounds = plantOperations.reduce(
+    (sum, plant) => sum + plant.shifts.reduce((shiftSum, value) => shiftSum + value, 0),
+    0,
+  );
+  const totalLoads = plantOperations.reduce(
+    (sum, plant) => sum + plant.customers.reduce((loadSum, customer) => loadSum + customer[1], 0),
+    0,
+  );
+
+  document.getElementById("operationsGrid").innerHTML = plantOperations
+    .map((plant) => {
+      const plantPounds = plant.shifts.reduce((sum, value) => sum + value, 0);
+      const plantLoads = plant.customers.reduce((sum, customer) => sum + customer[1], 0);
+      const fillRate =
+        plant.customers.reduce((sum, customer) => sum + customer[2], 0) /
+        plant.customers.length;
+
+      return `
+      <article class="plant-card">
+        <header>
+          <div>
+            <span>${plant.role}</span>
+            <h3>${plant.name}</h3>
+          </div>
+          <strong>${formatPounds(plantPounds)} lbs</strong>
+        </header>
+        <div class="plant-kpis">
+          <div><span>Loads today</span><strong>${plantLoads}</strong></div>
+          <div><span>Avg fill</span><strong>${fillRate.toFixed(1)}%</strong></div>
+          <div><span>Ready pallets</span><strong>${plant.palletsReady}</strong></div>
+          <div><span>QC hold</span><strong>${plant.palletsQcHold}</strong></div>
+        </div>
+        <div class="shift-list">
+          ${plant.shifts
+            .map(
+              (pounds, index) => `
+              <div class="shift-row">
+                <label>Shift ${index + 1}</label>
+                <div class="shift-track">
+                  <span style="width:${Math.round((pounds / Math.max(...plant.shifts)) * 100)}%"></span>
+                </div>
+                <strong>${pounds.toLocaleString()}</strong>
+              </div>`,
+            )
+            .join("")}
+        </div>
+        <div class="customer-grid">
+          ${plant.customers
+            .map(([key, loads, fill]) => {
+              const customer = customers[key];
+              return `
+              <div class="customer-tile ${key}">
+                <div class="customer-logo" aria-label="${customer.name} logo">${customer.short}</div>
+                <div>
+                  <span>${loads} loads</span>
+                  <strong class="${fillClass(fill)}">${fill.toFixed(1)}%</strong>
+                </div>
+              </div>`;
+            })
+            .join("")}
+        </div>
+      </article>`;
+    })
+    .join("");
+
+  const summary = document.getElementById("operationsSummary");
+  if (summary) {
+    summary.innerHTML = `
+      <span>Demo operations</span>
+      <strong>${formatPounds(totalPounds)} lbs</strong>
+      <em>${totalLoads} loads across 8 plants</em>`;
+  }
 }
 
 function renderPriceSnapshot() {
@@ -354,6 +572,7 @@ function renderCharts() {
   renderPriceSnapshot();
   renderIngredientCharts();
   renderDiesel();
+  renderOperations();
 }
 
 async function boot() {

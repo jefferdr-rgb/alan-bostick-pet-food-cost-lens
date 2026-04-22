@@ -127,7 +127,7 @@ main {
 
 .metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   margin-top: -44px;
   position: relative;
@@ -444,6 +444,209 @@ li {
   margin-top: 10px;
 }
 
+.operations-section {
+  margin-top: 24px;
+}
+
+.operations-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.plant-card {
+  min-height: 520px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 22px 60px rgba(7, 59, 42, 0.1);
+}
+
+.plant-card header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: start;
+}
+
+.plant-card header span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.plant-card h3 {
+  margin: 7px 0 0;
+  color: var(--deep);
+  font-size: clamp(1.5rem, 2.5vw, 2.15rem);
+  line-height: 1;
+}
+
+.plant-card header strong {
+  min-width: 120px;
+  color: var(--green);
+  text-align: right;
+  font-size: clamp(1.45rem, 2vw, 2rem);
+  line-height: 1;
+}
+
+.plant-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.plant-kpis div {
+  min-height: 82px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfaf4;
+}
+
+.plant-kpis span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.plant-kpis strong {
+  display: block;
+  margin-top: 9px;
+  color: var(--deep);
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.shift-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.shift-row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 96px;
+  gap: 10px;
+  align-items: center;
+}
+
+.shift-row label,
+.shift-row strong {
+  color: var(--deep);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.shift-row strong {
+  text-align: right;
+}
+
+.shift-track {
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8e0c9;
+}
+
+.shift-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--green), var(--gold));
+}
+
+.customer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.customer-tile {
+  min-height: 116px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+}
+
+.customer-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 950;
+  letter-spacing: 0;
+}
+
+.customer-tile.dg .customer-logo {
+  color: #111;
+  background: #fff200;
+  border: 2px solid #111;
+}
+
+.customer-tile.tsc .customer-logo {
+  background: #b5121b;
+}
+
+.customer-tile.aldi .customer-logo {
+  background: #164194;
+  box-shadow: inset 0 -5px 0 #f58220;
+}
+
+.customer-tile.fd .customer-logo {
+  color: #e31837;
+  background: #f6d21b;
+  border: 2px solid #e31837;
+}
+
+.customer-tile.topco .customer-logo {
+  background: #0b6b9b;
+}
+
+.customer-tile.heb .customer-logo {
+  background: #d71920;
+}
+
+.customer-tile span {
+  display: block;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.customer-tile strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.customer-tile strong.good {
+  color: var(--green);
+}
+
+.customer-tile strong.watch {
+  color: #b54708;
+}
+
+.customer-tile strong.risk {
+  color: #b42318;
+}
+
 footer {
   display: flex;
   align-items: center;
@@ -549,7 +752,8 @@ footer p {
   .split,
   .ingredient-grid,
   .price-grid,
-  .diesel-section {
+  .diesel-section,
+  .operations-grid {
     grid-template-columns: 1fr;
   }
   .metrics {
@@ -573,5 +777,24 @@ footer p {
   footer {
     align-items: start;
     flex-direction: column;
+  }
+}
+
+@media (max-width: 560px) {
+  .plant-kpis,
+  .customer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plant-card header,
+  .diesel-card header {
+    display: block;
+  }
+
+  .plant-card header strong,
+  .diesel-card header strong {
+    display: block;
+    margin-top: 12px;
+    text-align: left;
   }
 }
