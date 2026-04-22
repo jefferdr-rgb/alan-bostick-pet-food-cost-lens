@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Alan Bostick Pet Food Ingredient Cost Lens</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <nav>
+        <img src="assets/sunshine_logo_white.png" alt="Sunshine Mills" />
+        <span>Alan Bostick Cost Lens</span>
+      </nav>
+      <div class="hero-grid">
+        <section>
+          <p class="eyebrow">Primary pet food ingredient monitor</p>
+          <h1>Live and historical ingredient pricing.</h1>
+          <p class="lede">
+            Built for Alan Bostick to monitor the core commodity inputs behind extruded pet food:
+            grains, meals, fats, rice, and formulation-adjacent proxies over the last three years.
+          </p>
+          <div class="status-row">
+            <span id="feedStatus">Loading market feeds...</span>
+            <span id="lastUpdated">Fallback snapshot ready</span>
+          </div>
+        </section>
+        <aside class="hero-panel">
+          <strong>Primary pet food cost inputs</strong>
+          <div id="ingredientChips" class="chips"></div>
+        </aside>
+      </div>
+    </header>
+
+    <main>
+      <section class="metrics" id="metrics"></section>
+
+      <section class="price-strip">
+        <div class="price-strip-head">
+          <div>
+            <p class="eyebrow">Live / latest snapshot</p>
+            <h2>Primary ingredient prices</h2>
+          </div>
+          <p id="priceSnapshotNote">Latest available futures and market proxy prices.</p>
+        </div>
+        <div class="price-grid" id="priceSnapshot"></div>
+      </section>
+
+      <section class="chart-shell basket-shell">
+        <div class="chart-head">
+          <div>
+            <p class="eyebrow">Historical blend</p>
+            <h2>Pet food input basket index</h2>
+          </div>
+          <p class="chart-note">
+            Corn 32%, soybean meal 22%, rice 18%, fat/oil 16%, wheat/middlings 12%.
+          </p>
+        </div>
+        <div id="basketChart" class="svg-chart large-chart" aria-label="Weighted ingredient input basket chart"></div>
+      </section>
+
+      <section class="ingredient-section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Historical ingredient series</p>
+            <h2>Primary ingredient charts</h2>
+          </div>
+          <p>
+            Each graph is indexed to 100 at the start of the period so the direction and volatility
+            stay readable.
+          </p>
+        </div>
+        <div class="ingredient-grid" id="ingredientCharts"></div>
+      </section>
+
+      <section class="split">
+        <article>
+          <p class="eyebrow">Ingredient method</p>
+          <h2>What was counted</h2>
+          <p>
+            Ingredient lists were sampled from dry/extruded pet food formulas, then normalized into
+            cost-bearing categories. Repeated first-panel ingredients receive the strongest weighting
+            because pet food labels are ordered by pre-cook weight.
+          </p>
+          <div class="bars" id="commonBars"></div>
+        </article>
+        <article>
+          <p class="eyebrow">Data method</p>
+          <h2>Market proxies</h2>
+          <p>
+            Live mode attempts browser-based market fetches. If blocked by CORS or rate limits, the
+            page keeps working with a built-in April 2026 snapshot.
+          </p>
+          <ul id="sourceList"></ul>
+        </article>
+      </section>
+
+      <section class="diesel-section">
+        <div class="diesel-copy">
+          <p class="eyebrow">Freight energy</p>
+          <h2>Diesel price pressure</h2>
+          <p>
+            Diesel is tracked separately from the ingredient basket because it moves inbound grain,
+            rendered meals, outbound finished goods, and distributor freight.
+          </p>
+        </div>
+        <article class="diesel-card">
+          <header>
+            <div>
+              <span id="dieselSource">EIA proxy</span>
+              <h3>U.S. on-highway diesel</h3>
+            </div>
+            <strong id="dieselMove">--</strong>
+          </header>
+          <div class="diesel-price" id="dieselPrice">--</div>
+          <div id="dieselChart" class="svg-chart" aria-label="Diesel price chart"></div>
+        </article>
+      </section>
+    </main>
+
+    <footer>
+      <img src="assets/sunshine_logo_color.png" alt="Sunshine Mills" />
+      <p>
+        Ingredient cost monitor prepared for Alan Bostick. Commodity proxies are directional and not
+        purchase-contract quotes.
+      </p>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
