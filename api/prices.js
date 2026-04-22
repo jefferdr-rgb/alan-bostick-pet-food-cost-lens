@@ -13,11 +13,21 @@ function json(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function fetchYahoo(symbol) {
   const end = Math.floor(Date.now() / 1000);
   const start = end - 60 * 60 * 24 * 365 * 3;
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=${start}&period2=${end}&interval=1mo`;
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     headers: {
       "User-Agent": "Mozilla/5.0",
       Accept: "application/json",
@@ -42,7 +52,7 @@ async function fetchEiaDiesel() {
 
   // FRED mirrors the EIA weekly U.S. No. 2 diesel retail price series without an API key.
   const url = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=GASDESW";
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     headers: {
       "User-Agent": "Mozilla/5.0",
       Accept: "text/csv",
@@ -73,7 +83,7 @@ function textFromCell(cell) {
 async function fetchEiaDieselTable() {
   const url =
     "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?f=W&n=PET&s=EMD_EPD2D_PTE_NUS_DPG";
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     headers: {
       "User-Agent": "Mozilla/5.0",
       Accept: "text/html",
@@ -124,9 +134,12 @@ async function fetchEiaDieselTable() {
 
 module.exports = async function handler(req, res) {
   try {
-    const entries = await Promise.all(
-      Object.entries(yahooSeries).map(async ([key, symbol]) => [key, await fetchYahoo(symbol)])
+    const settledEntries = await Promise.allSettled(
+      Object.entries(yahooSeries).map(async ([key, symbol]) => [key, await fetchYahoo(symbol)]),
     );
+    const entries = settledEntries
+      .filter((result) => result.status === "fulfilled")
+      .map((result) => result.value);
     const data = Object.fromEntries(entries);
 
     data.diesel = await fetchEiaDiesel();
