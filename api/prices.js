@@ -143,15 +143,18 @@ async function fetchEiaDieselTable() {
 }
 
 async function fetchEiaDailyDiesel() {
-  const response = await fetchWithTimeout("https://www.eia.gov/todayinenergy/prices.php", {
-    headers: {
-      "User-Agent": "Mozilla/5.0",
-      Accept: "text/html",
-    },
-  });
-  if (!response.ok) throw new Error(`EIA daily diesel ${response.status}`);
+  const html = await fetchEiaDailyHtml();
+  const direct = parseEiaDailyDieselHtml(html);
+  if (direct) return direct;
 
-  const html = await response.text();
+  const text = await fetchEiaDailyTextMirror();
+  const mirrored = parseEiaDailyDieselText(text);
+  if (mirrored) return mirrored;
+
+  throw new Error("EIA daily diesel parse");
+}
+
+function parseEiaDailyDieselHtml(html) {
   const dateMatch = html.match(/Retail Petroleum Prices[\s\S]*?,\s*(\d{1,2})\/(\d{1,2})\/(\d{2})/i);
   const dieselCells = (html.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [])
     .map((row) =>
@@ -161,12 +164,48 @@ async function fetchEiaDailyDiesel() {
     )
     .find((cells) => cells[0] === "Diesel" && cells[1] === "U.S. Average");
   const dieselPrice = Number(dieselCells?.[2]);
-  if (!dateMatch || !Number.isFinite(dieselPrice)) throw new Error("EIA daily diesel parse");
+  if (!dateMatch || !Number.isFinite(dieselPrice)) return null;
 
   return {
     x: `20${dateMatch[3]}-${dateMatch[1].padStart(2, "0")}-${dateMatch[2].padStart(2, "0")}`,
     y: dieselPrice,
   };
+}
+
+function parseEiaDailyDieselText(text) {
+  const dateMatch = text.match(/Retail Petroleum Prices.*?,\s*(\d{1,2})\/(\d{1,2})\/(\d{2})/i);
+  const dieselMatch = text.match(/^Diesel\s+U\.S\. Average\s+([\d.]+)/im);
+  if (!dateMatch || !dieselMatch) return null;
+
+  return {
+    x: `20${dateMatch[3]}-${dateMatch[1].padStart(2, "0")}-${dateMatch[2].padStart(2, "0")}`,
+    y: Number(dieselMatch[1]),
+  };
+}
+
+async function fetchEiaDailyHtml() {
+  const response = await fetchWithTimeout("https://www.eia.gov/todayinenergy/prices.php", {
+    headers: {
+      "User-Agent": "Mozilla/5.0",
+      Accept: "text/html",
+    },
+  });
+  if (!response.ok) throw new Error(`EIA daily diesel ${response.status}`);
+  return response.text();
+}
+
+async function fetchEiaDailyTextMirror() {
+  const response = await fetchWithTimeout(
+    "https://r.jina.ai/http://r.jina.ai/http://https://www.eia.gov/todayinenergy/prices.php",
+    {
+      headers: {
+        "User-Agent": "Mozilla/5.0",
+        Accept: "text/plain",
+      },
+    },
+  );
+  if (!response.ok) throw new Error(`EIA daily mirror ${response.status}`);
+  return response.text();
 }
 
 module.exports = async function handler(req, res) {
