@@ -37,6 +37,7 @@ async function fetchYahoo(symbol) {
 }
 
 async function fetchEiaDiesel() {
+  // FRED mirrors the EIA weekly U.S. No. 2 diesel retail price series without an API key.
   const url = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=GASDESW";
   const response = await fetch(url, {
     headers: {

@@ -14,7 +14,7 @@ const sources = [
   "Dry/extruded pet food ingredient panels normalized into cost-bearing ingredient families",
   "CBOT futures proxies for corn, soybean meal, soybean oil, rough rice, and wheat",
   "Fat, rice, and middlings categories use directional market proxies where exact feed-grade quotes are unavailable",
-  "Live/latest feed attempt with built-in April 2026 historical fallback when browser access is blocked",
+  "Server-side live/latest feed attempt with built-in April 2026 historical fallback when provider access is blocked",
 ];
 
 const palette = {
